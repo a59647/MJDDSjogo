@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Reticle : MonoBehaviour
 {
+    public static Reticle Instance { get; private set; }
+
     [Header("Animation Settings")]
     [SerializeField] private AnimationCurve animCurve;
     [SerializeField] private float selectAnimTime;
@@ -23,14 +25,21 @@ public class Reticle : MonoBehaviour
     private GameObject selectedObject;
 
     [Header("Disparos")]
-    [SerializeField] private int maxShots = 5;
+    [SerializeField] private int maxShots = 5; // Mantido aqui para controle local
     private int shotsLeft;
-
-    [Header("Referência ao Target")]
-    [SerializeField] private Target targetScript;
 
     private void Awake()
     {
+        // Singleton pattern para fácil acesso de outros scripts
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+
         foreach (GameObject point in points)
         {
             pointStartPos.Add(point.transform.localPosition);
@@ -121,9 +130,14 @@ public class Reticle : MonoBehaviour
         Debug.Log("Disparos restantes: " + shotsLeft);
         this.gameObject.SetActive(false);
 
-        if (shotsLeft <= 0)
+        // Informa o LevelManager sobre o disparo usando o Singleton
+        if (LevelManager.Instance != null)
         {
-            targetScript.CheckEndCondition(); // Verifica se ganhou ou perdeu
+            LevelManager.Instance.IncrementProjectilesLaunched();
+        }
+        else
+        {
+            Debug.LogError("LevelManager não encontrado na cena!");
         }
     }
 
